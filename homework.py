@@ -1,11 +1,12 @@
+import logging
 import os
 import sys
 import time
-import logging
-import requests
-import telegram
 from http import HTTPStatus
 from logging.handlers import RotatingFileHandler
+
+import requests
+import telegram
 from dotenv import load_dotenv
 
 load_dotenv()
