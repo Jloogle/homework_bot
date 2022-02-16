@@ -57,8 +57,7 @@ def send_message(bot, message):
 
 
 def get_api_answer(current_timestamp):
-    """Получает ответ от API-сервиса и преобразует его в тип данных Python.
-    """
+    """Получает ответ от API-сервиса и преобразует его в тип данных Python."""
     timestamp = current_timestamp or int(time.time())
     params = {'from_date': timestamp}
     try:
@@ -79,8 +78,10 @@ def get_api_answer(current_timestamp):
 
 
 def check_response(response):
-    """Функция проверки на корректный ответ от API.
-    Возвращает список домашних работ."""
+    """
+    Функция проверки на корректный ответ от API.
+    Возвращает список домашних работ.
+    """
     try:
         homeworks = response['homeworks']
         current_date = response['current_date']
@@ -95,7 +96,7 @@ def check_response(response):
             logger.error(error_message)
             raise error_message
         if not homeworks:
-            message_debug = ('Статус ваших домашних работ со времени' 
+            message_debug = ('Статус ваших домашних работ со времени'
                              f' {current_date} не изменился.')
             logger.debug(message_debug)
         return homeworks
@@ -124,8 +125,7 @@ def parse_status(homework):
 
 
 def check_tokens():
-    """Функция проверяет наличие всех необходимых токенов для работы программы.
-    """
+    """Проверяет наличие всех необходимых токенов для работы программы."""
     tokens_dict = {
         'PRACTICUM_TOKEN': PRACTICUM_TOKEN,
         'TELEGRAM_TOKEN': TELEGRAM_TOKEN,
