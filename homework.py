@@ -46,9 +46,7 @@ formatter = logging.Formatter(
 
 
 def send_message(bot, message):
-    """
-    Функция отправки сообщения ботом в чат TELEGRAM_CHAT_ID
-    """
+    """Функция отправки сообщения ботом в чат TELEGRAM_CHAT_ID."""
     try:
         bot.send_message(chat_id=TELEGRAM_CHAT_ID,
                          text=message)
@@ -59,8 +57,7 @@ def send_message(bot, message):
 
 
 def get_api_answer(current_timestamp):
-    """
-    Получает ответ от API-сервиса и преобразует его в тип данных Python
+    """Получает ответ от API-сервиса и преобразует его в тип данных Python.
     """
     timestamp = current_timestamp or int(time.time())
     params = {'from_date': timestamp}
@@ -82,10 +79,8 @@ def get_api_answer(current_timestamp):
 
 
 def check_response(response):
-    """
-    Функция проверки на корректный ответ от API
-    Возвращает список домашних работ
-    """
+    """Функция проверки на корректный ответ от API.
+    Возвращает список домашних работ."""
     try:
         homeworks = response['homeworks']
         current_date = response['current_date']
@@ -107,9 +102,7 @@ def check_response(response):
 
 
 def parse_status(homework):
-    """
-    Функция возвращает статус домашней работы
-    """
+    """Функция возвращает статус домашней работы."""
     try:
         homework_name = homework.get('homework_name')
         homework_status = homework.get('status')
@@ -131,8 +124,7 @@ def parse_status(homework):
 
 
 def check_tokens():
-    """
-    Функция проверяет наличие всех необходимых токенов для работы программы
+    """Функция проверяет наличие всех необходимых токенов для работы программы.
     """
     tokens_dict = {
         'PRACTICUM_TOKEN': PRACTICUM_TOKEN,
