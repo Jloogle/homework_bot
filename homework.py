@@ -43,6 +43,7 @@ logger.addHandler(handler)
 formatter = logging.Formatter(
     '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+handler.setFormatter(formatter)
 
 
 def send_message(bot, message):
@@ -92,7 +93,7 @@ def check_response(response):
     else:
         if not isinstance(homeworks, list):
             error_message = ('Под ключом "homeworks" в ответ приходит'
-                             'недопустимый тип данных')
+                             ' недопустимый тип данных')
             logger.error(error_message)
             raise error_message
         if not homeworks:
@@ -105,8 +106,8 @@ def check_response(response):
 def parse_status(homework):
     """Функция возвращает статус домашней работы."""
     try:
-        homework_name = homework.get('homework_name')
-        homework_status = homework.get('status')
+        homework_name = homework['homework_name']
+        homework_status = homework['status']
     except KeyError as error:
         error_message = f'В ответе API отсутствует ключ: {error}'
         logger.error(error_message)
@@ -119,7 +120,7 @@ def parse_status(homework):
             logger.error(error_message)
             raise KeyError(error_message)
 
-        verdict = HOMEWORK_STATUSES.get(homework_status)
+        verdict = HOMEWORK_STATUSES[homework_status]
 
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
@@ -161,7 +162,7 @@ def main():
             send_message(bot, error_message)
             time.sleep(RETRY_TIME)
         else:
-            current_timestamp = response.get('current_date')
+            current_timestamp = response['current_date']
 
 
 if __name__ == '__main__':
