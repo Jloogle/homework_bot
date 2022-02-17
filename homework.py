@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import sys
@@ -25,7 +26,6 @@ HOMEWORK_STATUSES = {
     'rejected': 'Работа проверена: у ревьюера есть замечания.'
 }
 
-# Здесь задана глобальная конфигурация для всех логгеров
 logging.basicConfig(
     level=logging.DEBUG,
     filename='bot.log',
@@ -33,10 +33,8 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
-# Устанавливаем уровень, с которого логи будут сохраняться в файл
 logger.setLevel(logging.INFO)
-# Указываем обработчик логов
-handler = RotatingFileHandler('my_logger.log',
+handler = RotatingFileHandler('logger.log',
                               maxBytes=50000000,
                               backupCount=5)
 logger.addHandler(handler)
@@ -51,9 +49,12 @@ def send_message(bot, message):
     try:
         bot.send_message(chat_id=TELEGRAM_CHAT_ID,
                          text=message)
-        logger.info(f'Бот отправил сообщение: {message}')
+        log_message = f'Бот отправил сообщение: {message}'
+        logger.info(log_message)
     except telegram.TelegramError as error:
-        logger.error('Не удалось отправить сообщение пользователю!')
+        error_message = ('Не удалось отправить сообщение пользователю!,'
+                         f' ошибка {error}')
+        logger.error(error_message)
         raise error
 
 
@@ -75,7 +76,12 @@ def get_api_answer(current_timestamp):
                    f'при запросе к {ENDPOINT}')
         logger.error(message)
         raise ValueError(message)
-    return homework_status.json()
+    try:
+        return homework_status.json()
+    except json.decoder.JSONDecodeError as error:
+        error_message = ('Не уделось получить данные в формате JSON')
+        logger.error(error_message)
+        raise error
 
 
 def check_response(response):
@@ -147,6 +153,7 @@ def main():
         sys.exit(1)
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
+    last_error = ''
 
     while True:
         try:
@@ -159,7 +166,9 @@ def main():
         except Exception as error:
             error_message = f'Сбой в работе программы: {error}'
             logger.error(error_message)
-            send_message(bot, error_message)
+            if last_error != error_message:
+                last_error = error_message
+                send_message(bot, error_message)
             time.sleep(RETRY_TIME)
         else:
             current_timestamp = response['current_date']
