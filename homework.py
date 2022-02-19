@@ -63,8 +63,7 @@ def get_api_answer(current_timestamp):
     timestamp = current_timestamp or int(time.time())
     params = {'from_date': timestamp}
     ERROR_MESSAGE_REQ = (f'API не отвечает, при обращении к {ENDPOINT} '
-                         'код ошибки: {error}'
-                         )
+                         'код ошибки: {error}')
     MESSAGE = ('Код ответа не соответствует ожидаемому '
                f'при запросе к {ENDPOINT}')
     ERROR_MESSAGE_JSON = 'Не удалось получить данные в формате JSON'
@@ -113,8 +112,8 @@ def parse_status(homework):
     """Функция возвращает статус домашней работы."""
     ERROR_MESSAGE_API = 'В ответе API отсутствует ключ: {error}'
     ERROR_MESSAGE_STATUS = (
-                'Статус {homework_status} '
-                'домашней работы: {homework_name} не документирован.')
+        'Статус {homework_status} '
+        'домашней работы: {homework_name} не документирован.')
     try:
         homework_name = homework['homework_name']
         homework_status = homework['status']
