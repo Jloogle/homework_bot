@@ -10,6 +10,27 @@ import requests
 import telegram
 from dotenv import load_dotenv
 
+
+LOG_MESSAGE = 'Бот отправил сообщение: {message}'
+ERROR_MESSAGE_TELEGRAM = ('Не удалось отправить сообщение пользователю!,'
+                          ' ошибка {error}')
+ERROR_MESSAGE_REQ = ('API не отвечает, при обращении к {ENDPOINT} '
+                     'код ошибки: {error}')
+ERROR_MESSAGE_JSON = 'Не удалось получить данные в формате JSON'
+ERROR_MESSAGE_ENDPOINT = ('Код ответа не соответствует ожидаемому '
+                          'при запросе к {ENDPOINT}')
+ERROR_MESSAGE_KEY = 'Искомых ключей в ответе запроса API не найдено'
+ERROR_MESSAGE_ISIN = ('Под ключом "homeworks" в ответ приходит'
+                      ' недопустимый тип данных')
+MESSAGE_DEBUG_CUR_DATE = ('Статус ваших домашних работ со времени'
+                          ' {current_date} не изменился.')
+ERROR_MESSAGE_API_KEY = 'В ответе API отсутствует ключ: {error}'
+ERROR_MESSAGE_STATUS = ('Статус {homework_status} '
+                        'домашней работы: {homework_name} не документирован.')
+ERROR_CRITICAL = ('Отсутствует обязательная переменная окружения: '
+                  '{token_name}')
+ERROR_MESSAGE_MAIN = 'Сбой в работе программы: {error}'
+
 load_dotenv()
 
 PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
@@ -46,12 +67,9 @@ handler.setFormatter(formatter)
 
 def send_message(bot, message):
     """Функция отправки сообщения ботом в чат TELEGRAM_CHAT_ID."""
-    LOG_MESSAGE = f'Бот отправил сообщение: {message}'
-    ERROR_MESSAGE_TELEGRAM = ('Не удалось отправить сообщение пользователю!,'
-                              ' ошибка {error}')
     try:
         bot.send_message(chat_id=TELEGRAM_CHAT_ID,
-                         text=message)
+                         text=message.format(message=message))
         logger.info(LOG_MESSAGE)
     except telegram.TelegramError as error:
         logger.error(ERROR_MESSAGE_TELEGRAM.format(error=error))
@@ -62,20 +80,15 @@ def get_api_answer(current_timestamp):
     """Получает ответ от API-сервиса и преобразует его в тип данных Python."""
     timestamp = current_timestamp or int(time.time())
     params = {'from_date': timestamp}
-    ERROR_MESSAGE_REQ = (f'API не отвечает, при обращении к {ENDPOINT} '
-                         'код ошибки: {error}')
-    MESSAGE = ('Код ответа не соответствует ожидаемому '
-               f'при запросе к {ENDPOINT}')
-    ERROR_MESSAGE_JSON = 'Не удалось получить данные в формате JSON'
     try:
         homework_status = requests.get(ENDPOINT, headers=HEADERS,
                                        params=params)
     except requests.RequestException as error:
-        logger.error(ERROR_MESSAGE_REQ.format(error=error))
+        logger.error(ERROR_MESSAGE_REQ.format(ENDPOINT=ENDPOINT, error=error))
         raise error
     if homework_status.status_code != HTTPStatus.OK:
-        logger.error(MESSAGE)
-        raise ValueError(MESSAGE)
+        logger.error(ERROR_MESSAGE_ENDPOINT.format(ENDPOINT=ENDPOINT))
+        raise ValueError(ERROR_MESSAGE_ENDPOINT.format(ENDPOINT=ENDPOINT))
     try:
         return homework_status.json()
     except json.decoder.JSONDecodeError as error:
@@ -88,11 +101,6 @@ def check_response(response):
     Функция проверки на корректный ответ от API.
     Возвращает список домашних работ.
     """
-    ERROR_MESSAGE_KEY = 'Искомых ключей в ответе запроса API не найдено'
-    ERROR_MESSAGE_ISIN = ('Под ключом "homeworks" в ответ приходит'
-                          ' недопустимый тип данных')
-    MESSEGE_DEBUG = ('Статус ваших домашних работ со времени'
-                     ' {current_date} не изменился.')
     try:
         homeworks = response['homeworks']
         current_date = response['current_date']
@@ -104,22 +112,19 @@ def check_response(response):
             logger.error(ERROR_MESSAGE_ISIN)
             raise ERROR_MESSAGE_ISIN
         if not homeworks:
-            logger.debug(MESSEGE_DEBUG.format(current_date=current_date))
+            logger.debug(MESSAGE_DEBUG_CUR_DATE.format(
+                current_date=current_date))
         return homeworks
 
 
 def parse_status(homework):
     """Функция возвращает статус домашней работы."""
-    ERROR_MESSAGE_API = 'В ответе API отсутствует ключ: {error}'
-    ERROR_MESSAGE_STATUS = (
-        'Статус {homework_status} '
-        'домашней работы: {homework_name} не документирован.')
     try:
         homework_name = homework['homework_name']
         homework_status = homework['status']
     except KeyError as error:
-        logger.error(ERROR_MESSAGE_API.format(error=error))
-        raise KeyError(ERROR_MESSAGE_API.format(error=error))
+        logger.error(ERROR_MESSAGE_API_KEY.format(error=error))
+        raise KeyError(ERROR_MESSAGE_API_KEY.format(error=error))
     else:
         if homework_status not in HOMEWORK_STATUSES:
             logger.error(ERROR_MESSAGE_STATUS.format(
@@ -138,8 +143,6 @@ def parse_status(homework):
 
 def check_tokens():
     """Проверяет наличие всех необходимых токенов для работы программы."""
-    ERROR_CRITICAL = ('Отсутствует обязательная переменная окружения:'
-                      ' {token_name}')
     tokens_dict = {
         'PRACTICUM_TOKEN': PRACTICUM_TOKEN,
         'TELEGRAM_TOKEN': TELEGRAM_TOKEN,
@@ -154,7 +157,6 @@ def check_tokens():
 
 def main():
     """Основная логика работы бота."""
-    ERROR_MESSAGE = 'Сбой в работе программы: {error}'
     if not check_tokens():
         sys.exit(1)
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
@@ -170,10 +172,10 @@ def main():
                 send_message(bot, message)
             time.sleep(RETRY_TIME)
         except Exception as error:
-            logger.error(ERROR_MESSAGE.format(error=error))
-            if last_error != ERROR_MESSAGE.format(error=error):
-                last_error = ERROR_MESSAGE.format(error=error)
-                send_message(bot, ERROR_MESSAGE.format(error=error))
+            logger.error(ERROR_MESSAGE_MAIN.format(error=error))
+            if last_error != ERROR_MESSAGE_MAIN.format(error=error):
+                last_error = ERROR_MESSAGE_MAIN.format(error=error)
+                send_message(bot, ERROR_MESSAGE_MAIN.format(error=error))
             time.sleep(RETRY_TIME)
         else:
             current_timestamp = response['current_date']
