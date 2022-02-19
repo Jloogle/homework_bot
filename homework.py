@@ -48,7 +48,7 @@ def send_message(bot, message):
     """Функция отправки сообщения ботом в чат TELEGRAM_CHAT_ID."""
     LOG_MESSAGE = f'Бот отправил сообщение: {message}'
     ERROR_MESSAGE_TELEGRAM = ('Не удалось отправить сообщение пользователю!,'
-                              ' ошибка [error]')
+                              ' ошибка {error}')
     try:
         bot.send_message(chat_id=TELEGRAM_CHAT_ID,
                          text=message)
@@ -63,7 +63,7 @@ def get_api_answer(current_timestamp):
     timestamp = current_timestamp or int(time.time())
     params = {'from_date': timestamp}
     ERROR_MESSAGE_REQ = (f'API не отвечает, при обращении к {ENDPOINT} '
-                         'код ошибки: [error]'
+                         'код ошибки: {error}'
                          )
     MESSAGE = ('Код ответа не соответствует ожидаемому '
                f'при запросе к {ENDPOINT}')
@@ -93,7 +93,7 @@ def check_response(response):
     ERROR_MESSAGE_ISIN = ('Под ключом "homeworks" в ответ приходит'
                           ' недопустимый тип данных')
     MESSEGE_DEBUG = ('Статус ваших домашних работ со времени'
-                     ' [current_date] не изменился.')
+                     ' {current_date} не изменился.')
     try:
         homeworks = response['homeworks']
         current_date = response['current_date']
@@ -111,10 +111,10 @@ def check_response(response):
 
 def parse_status(homework):
     """Функция возвращает статус домашней работы."""
-    ERROR_MESSAGE_API = 'В ответе API отсутствует ключ: [error]'
+    ERROR_MESSAGE_API = 'В ответе API отсутствует ключ: {error}'
     ERROR_MESSAGE_STATUS = (
-                'Статус [homework_status] '
-                'домашней работы: [homework_name] не документирован.')
+                'Статус {homework_status} '
+                'домашней работы: {homework_name} не документирован.')
     try:
         homework_name = homework['homework_name']
         homework_status = homework['status']
@@ -139,6 +139,8 @@ def parse_status(homework):
 
 def check_tokens():
     """Проверяет наличие всех необходимых токенов для работы программы."""
+    ERROR_CRITICAL = ('Отсутствует обязательная переменная окружения:'
+                      ' {token_name}')
     tokens_dict = {
         'PRACTICUM_TOKEN': PRACTICUM_TOKEN,
         'TELEGRAM_TOKEN': TELEGRAM_TOKEN,
@@ -146,15 +148,14 @@ def check_tokens():
     }
     for token_name, token in tokens_dict.items():
         if not token:
-            logger.critical(
-                f'Отсутствует обязательная переменная окружения: {token_name}'
-            )
+            logger.critical(ERROR_CRITICAL.format(token_name=token_name))
             return False
     return True
 
 
 def main():
     """Основная логика работы бота."""
+    ERROR_MESSAGE = 'Сбой в работе программы: {error}'
     if not check_tokens():
         sys.exit(1)
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
@@ -170,11 +171,10 @@ def main():
                 send_message(bot, message)
             time.sleep(RETRY_TIME)
         except Exception as error:
-            error_message = f'Сбой в работе программы: {error}'
-            logger.error(error_message)
-            if last_error != error_message:
-                last_error = error_message
-                send_message(bot, error_message)
+            logger.error(ERROR_MESSAGE.format(error=error))
+            if last_error != ERROR_MESSAGE.format(error=error):
+                last_error = ERROR_MESSAGE.format(error=error)
+                send_message(bot, ERROR_MESSAGE.format(error=error))
             time.sleep(RETRY_TIME)
         else:
             current_timestamp = response['current_date']
